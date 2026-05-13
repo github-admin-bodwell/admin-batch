@@ -1,0 +1,182 @@
+<?php
+require_once __DIR__.'/sendEmailClass.php';
+
+// $dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
+
+function getCounselorEmail($name) {
+  $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
+  $conn = new PDO($dsn);
+  $query = "SELECT *
+  FROM tblStaff
+  WHERE CONCAT(FirstName, ' ', LastName) = '$name'";
+  $stmt = $conn->prepare($query);
+  if ($stmt->execute()) {
+      $row = $stmt->fetch();
+      if($row) {
+        return $row['Email3'];
+      } else {
+        return '';
+      }
+  }
+
+}
+function createsubtreetable($tblheader, $tbl) {
+  $color = '';
+  $fontcolor = '';
+  switch ($tblheader) {
+    case 'Moderate':
+      $color = 'yellow';
+      $fontcolor = 'black';
+      break;
+    case 'High':
+      $color = 'orange';
+      $fontcolor = 'black';
+      break;
+    case 'Critical':
+      $color = 'red';
+      $fontcolor = 'white';
+      break;
+    default:
+      // code...
+      break;
+  }
+  return "<table border=1><tr style='background-color:$color; color:$fontcolor;text-align:center'><td colspan='3' >$tblheader</td></tr><tr><td>Name</td><td>Course</td><td>Mark</td></tr>$tbl</table>";
+}
+
+function createtree($arr) {
+  $i=0;
+
+  foreach($arr as $x => $val) {
+    $maintbl = '';
+
+    $Moderatetbl = '';
+    $Hightbl = '';
+    $Criticaltbl = '';
+    for ($i=0; $i < sizeof($val); $i++) {
+      $sFirstName = $val[$i]['sFirstName'];
+      $sLastName = $val[$i]['sLastName'];
+      $sEnglishName = $val[$i]['sEnglishName'];
+      $courseName = $val[$i]['courseName'];
+      $courseRateScaled = $val[$i]['courseRateScaled'];
+      if($val[$i]['AlertLevel'] == 'Moderate') {
+        $Moderatetbl .= "<tr><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td>$courseRateScaled</td></tr>";
+      } elseif ($val[$i]['AlertLevel'] == 'High') {
+        $Hightbl .= "<tr><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td>$courseRateScaled</td></tr>";
+      } elseif ($val[$i]['AlertLevel'] == 'Critical') {
+        $Criticaltbl .= "<tr><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td>$courseRateScaled</td></tr>";
+      } else {
+
+      }
+    }
+    $maintbl = createsubtreetable('Moderate' ,$Moderatetbl).createsubtreetable('High',$Hightbl).createsubtreetable('Critical',$Criticaltbl);
+    $email  = getCounselorEmail($x);
+    echo "------------------$email--------------------------<br/>";
+    echo $maintbl;
+    echo "-------------------------------------------------<br/>";
+
+
+  }
+  // return $maintbl;
+
+
+}
+
+$dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
+$conn = new PDO($dsn);
+$query = "SELECT
+  studentId,
+ sFirstName,
+ sLastName,
+ sEnglishName,
+ counselor,
+  courseId,
+  courseName,
+  COUNT(categoryId) categoryCount,
+  SUM(categoryWeight) categoryWeightTotal,
+  SUM(categoryRateScaled * categoryWeight) courseRateOrigin,
+  SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) courseRateScaled,
+ MAlert,
+ HAlert,
+ CAlert,
+ case
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= CAlert
+ then 'Critical'
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= HAlert
+ then 'High'
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= MAlert
+ then 'Moderate'
+ else 'None'
+ end as AlertLevel
+
+FROM (
+  SELECT
+    student.StudentID studentId,
+  student.FirstName sFirstName,
+  student.LastName sLastName,
+  student.EnglishName sEnglishName,
+  student.Counselor counselor,
+    course.SubjectID courseId,
+    course.SubjectName courseName,
+    category.CategoryID categoryId,
+    category.CategoryWeight categoryWeight,
+    SUM((grade.ScorePoint / item.MaxValue) * item.ItemWeight) * (1 / SUM(item.ItemWeight)) categoryRateScaled,
+   CASE
+    WHEN course.MAlert = 'B' THEN '0.86'
+    WHEN course.MAlert = 'C+' THEN '0.73'
+    WHEN course.MAlert = 'C' THEN '0.67'
+    WHEN course.MAlert = 'C-' THEN '0.60'
+    WHEN course.MAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS MAlert,
+    CASE
+    WHEN course.HAlert = 'B' THEN '0.86'
+    WHEN course.HAlert = 'C+' THEN '0.73'
+    WHEN course.HAlert = 'C' THEN '0.67'
+    WHEN course.HAlert = 'C-' THEN '0.60'
+    WHEN course.HAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS HAlert,
+   CASE
+    WHEN course.CAlert = 'B' THEN '0.86'
+    WHEN course.CAlert = 'C+' THEN '0.73'
+    WHEN course.CAlert = 'C' THEN '0.67'
+    WHEN course.CAlert = 'C-' THEN '0.60'
+    WHEN course.CAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS CAlert
+  FROM tblBHSOGSGrades grade
+    JOIN tblBHSOGSCategoryItems item ON grade.CategoryItemID = item.CategoryItemID
+    JOIN tblBHSOGSCourseCategory category ON item.CategoryID = category.CategoryID
+    JOIN tblBHSSubject course ON category.SubjectID = course.SubjectID
+    JOIN tblBHSStudentSubject studentSubject ON grade.StudSubjID = studentSubject.StudSubjID
+    JOIN tblBHSStudent student ON studentSubject.StudNum = StudentID
+  WHERE grade.SemesterID = (SELECT SemesterID FROM tblBHSSemester WHERE CurrentSemester = 'Y') AND grade.ScorePoint IS NOT NULL AND grade.Exempted <> 1 AND course.GAlert = '1'
+  GROUP BY student.StudentID, course.SubjectID, category.CategoryID, category.CategoryWeight, course.subjectName,
+ course.MAlert,
+    course.HAlert,
+    course.CAlert,student.FirstName, student.LastName, student.EnglishName, student.Counselor
+) categoryGrade
+GROUP BY studentId, courseId, courseName,sFirstName,sLastName,sEnglishName,counselor,
+MAlert, HAlert, CAlert
+ORDER BY counselor asc, AlertLevel desc";
+
+
+$stmt = $conn->prepare($query);
+
+
+
+if ($stmt->execute()) {
+    while ($row = $stmt->fetch()) {
+      if($row['AlertLevel'] !== 'None') {
+        $arr[$row['counselor']][] = $row;
+      }
+
+    }
+}
+
+createtree($arr);
+
+
+
+
+ ?>
