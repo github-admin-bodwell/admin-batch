@@ -8,8 +8,8 @@ require_once __DIR__.'/sendEmailClass2.php';
 
 
 
-// $dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
+$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
+// $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
 
 $conn = new PDO($dsn);
 
@@ -55,25 +55,25 @@ for ($i = 1; $i <= $batchSize; $i++) {
     $toList = str_replace(',', ';', $row['SendTo']);
     $isValid = true;
 
-    foreach (explode(';', $toList) as $email) {
-        if (!filter_var(trim($email), FILTER_VALIDATE_EMAIL)) {
-            $isValid = false;
-            break;
-        }
-    }
-    if (!$isValid) {
-        // Send notice to admin
-        sendEmail(
-            ['email' => 'chanho.lee@bodwell.edu', 'name' => ''],
-            [['email' => 'chanho.lee@bodwell.edu', 'name' => '']],
-            [],
-            "Invalid Email Address",
-            "{$sendID} - {$row['SendTo']}"
-        );
-
-        $conn->prepare("UPDATE tblsendemail SET sentdate = GETDATE() WHERE sendid = ?")->execute([$sendID]);
-        continue;
-    }
+    // foreach (explode(';', $toList) as $email) {
+    //     if (!filter_var(trim($email), FILTER_VALIDATE_EMAIL)) {
+    //         $isValid = false;
+    //         break;
+    //     }
+    // }
+    // if (!$isValid) {
+    //     // Send notice to admin
+    //     sendEmail(
+    //         ['email' => 'chanho.lee@bodwell.edu', 'name' => ''],
+    //         [['email' => 'chanho.lee@bodwell.edu', 'name' => '']],
+    //         [],
+    //         "Invalid Email Address",
+    //         "{$sendID} - {$row['SendTo']}"
+    //     );
+    //
+    //     $conn->prepare("UPDATE tblsendemail SET sentdate = GETDATE() WHERE sendid = ?")->execute([$sendID]);
+    //     continue;
+    // }
 
     // Handle attachment
     $attachments = []; // Always defined
