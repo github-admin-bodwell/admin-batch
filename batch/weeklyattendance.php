@@ -66,7 +66,7 @@ for ($i = 0; $i <= 4; $i++) {
                     WHEN '11' THEN 'G2'
                END AS Block,
                ? AS Sdate,
-               a.SameBlock,
+               a.SameGroup,
                d.Email3
         FROM tblBHSSubject a
         INNER JOIN tblStaff d ON a.TeacherID = d.StaffID
@@ -81,11 +81,18 @@ for ($i = 0; $i <= 4; $i++) {
                   AND b.SubjectID = a.SubjectID
               ) IS NULL
           AND (
+                -- Attendance group: another section with the same tblBHSSubject.SameGroup
+                -- recorded attendance that day (same rule as dailyattendance.php).
+                -- SameGroup is maintained on phpadmin's Attendance Groups page; NULL = stands alone.
+                -- Was SameBlock, which nothing populates. Changed 2026-09-22.
                 SELECT TOP 1 c.SDate
                 FROM tblBHSAttendanceRpt c
                 INNER JOIN tblBHSSubject e ON c.SubjectID = e.SubjectID
                 WHERE c.SDate = ?
-                  AND e.SameBlock = a.SameBlock
+                  AND a.SameGroup IS NOT NULL
+                  AND a.SameGroup <> ''
+                  AND e.SemesterID = a.SemesterID
+                  AND e.SameGroup = a.SameGroup
               ) IS NULL
     ";
 
@@ -185,20 +192,15 @@ foreach ($grouped as $teacher) {
         VALUES (?, ?, ?, '', ?, GETDATE(), 'WMA', ?, '')
     ");
 
-    // $insert->execute(array(
-    //     $teacher['email'],
-    //     'no-reply@bodwell.edu',
-    //     $subject,
-    //     $emailcontent,
-    //     'hallis@bodwell.edu;angela.jay@bodwell.edu;shane.chaffey@bodwell.edu'
-    // ));
-
+    // Production recipients: the teacher, cc Housam / Angela / Shane. This matches what
+    // the live task has been sending (verified in tblSendEmail, Sep 2026); the repo copy
+    // previously still had the Chanho-only test insert.
     $insert->execute(array(
-        'chanho.lee@bodwell.edu',
+        $teacher['email'],
         'no-reply@bodwell.edu',
         $subject,
         $emailcontent,
-        'kwyes3@gmail.com'
+        'hallis@bodwell.edu;angela.jay@bodwell.edu;shane.chaffey@bodwell.edu'
     ));
 
 }

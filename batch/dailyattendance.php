@@ -74,7 +74,10 @@ SELECT
     (SELECT TOP 1 r2.RDate
      FROM tblbhsAttendanceRpt r2
      INNER JOIN tblBHSSubject s2 ON r2.SubjectID = s2.SubjectID
-     WHERE s2.SameGroup = s.SameGroup
+     WHERE s.SameGroup IS NOT NULL
+       AND s.SameGroup <> ''
+       AND s2.SemesterID = s.SemesterID
+       AND s2.SameGroup = s.SameGroup
        AND CONVERT(date, r2.SDate) = '{today}'
      ORDER BY r2.RDate DESC) AS rdate2
 
