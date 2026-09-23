@@ -1,203 +1,197 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-date_default_timezone_set("America/Vancouver");
-require_once __DIR__ . '/sendEmailClass.php';
+require_once __DIR__.'/sendEmailClass.php';
 
+function getCounselorEmail($name) {
+  $dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
+
+  // $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
+  $conn = new PDO($dsn);
+  $query = "SELECT *
+  FROM tblStaff
+  WHERE CONCAT(FirstName, ' ', LastName) = '$name'";
+  $stmt = $conn->prepare($query);
+  if ($stmt->execute()) {
+      $row = $stmt->fetch();
+      if($row) {
+        return $row['Email3'];
+      } else {
+        return '';
+      }
+  }
+
+}
+function createsubtreetable($tblheader,$tbl) {
+
+  return "<style>table{border-collapse:collapse;}td{border:2px solid #006100;}</style><table><tr style='text-align:center'><td colspan='3' >$tblheader</td></tr><tr style='background-color:#b4c6e7; text-align:center;'><td>Student Name</td><td>Course Name</td><td>Mark</td></tr>$tbl</table>";
+}
+
+function createtree($arr) {
+  $i=0;
+  $mtbl = '';
+
+  foreach($arr as $x => $val) {
+    $maintbl = '';
+    $G12tbl = '';
+    $G11tbl = '';
+    $G10tbl = '';
+    $tbl = '';
+    for ($i=0; $i < sizeof($val); $i++) {
+      $sFirstName = $val[$i]['sFirstName'];
+      $sLastName = $val[$i]['sLastName'];
+      $sEnglishName = $val[$i]['sEnglishName'];
+      $courseName = $val[$i]['courseName'];
+      $courseRateScaled = number_format(round($val[$i]['courseRateScaled']*100,1),1);
+      // $courseRateScaled = $val[$i]['courseRateScaled'];
+      $color = '';
+      $fontcolor = '';
+      switch ($val[$i]['AlertLevel']) {
+        case 'Moderate':
+          $color = '#ffc000';
+          $fontcolor = 'black';
+          break;
+        case 'High':
+          $color = '#ed7d31';
+          $fontcolor = 'black';
+          break;
+        case 'Critical':
+          $color = '#c00000';
+          $fontcolor = 'white';
+          break;
+        default:
+          // code...
+          break;
+      }
+
+      if($val[$i]['CurrentGrade'] == 'Grade 12') {
+        $G12tbl .= "<tr style='text-align:center'><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td style='background-color:$color; color:$fontcolor;text-align:center'>$courseRateScaled</td></tr>";
+      } elseif ($val[$i]['CurrentGrade'] == 'Grade 11') {
+        $G11tbl .= "<tr style='text-align:center'><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td style='background-color:$color; color:$fontcolor;text-align:center'>$courseRateScaled</td></tr>";
+      } elseif ($val[$i]['CurrentGrade'] == 'Grade 10') {
+        $G10tbl .= "<tr style='text-align:center'><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td style='background-color:$color; color:$fontcolor;text-align:center'>$courseRateScaled</td></tr>";
+      } else {
+        $tbl .= "<tr style='text-align:center'><td>$sFirstName $sLastName $sEnglishName</td><td>$courseName</td><td style='background-color:$color; color:$fontcolor;text-align:center'>$courseRateScaled</td></tr>";
+      }
+
+    }
+    $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />'.createsubtreetable('Grade 8/9',$tbl);
+    // $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />';
+    $from =  array('email' => 'helpdesk@bodwell.edu', 'name' => 'IT Helpdesk');
+    $to = array(
+      array('email' => $email, 'name' => $x)
+    );
+
+    // echo $send;
+    $mtbl .= "------------------$x--------------------------<br/>".$maintbl."--------------------------------------------------------------------<br/>";
+
+
+  }
+  // return $maintbl;
+  $subject = "Weekly Academic Alert Report";
+  $to = array(
+    array('email' => 'chanho.lee@bodwell.edu', 'name' => 'Chano Lee'),
+  );
+$send = sendEmail($from, $to, $cc, $subject, $mtbl, $altBody = '');
+
+}
 $dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
-// Check day/time is Monday 1:05am
-$now = new DateTime();
-// if ($now->format('N') != 1 || $now->format('H:i') != '01:05') {
-//     exit;
-// }
-// Get group-based emails from inc_email.cfm logic
-function getGroupEmails($pdo, $groupCode) {
-    $emails = array();
-    $stmt = $pdo->prepare("SELECT Email3 FROM tblStaff WHERE GroupTeam LIKE ? AND currentstaff = 'Y' AND Email3 <> ''");
-    if ($stmt && $stmt->execute(["%$groupCode%"])) {
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            if (!empty($row['Email3'])) {
-                $emails[] = $row['Email3'];
-            }
-        }
+
+// $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
+$conn = new PDO($dsn);
+$query = "SELECT
+  studentId,
+ sFirstName,
+ sLastName,
+ sEnglishName,
+ counselor,
+  courseId,
+  courseName,
+  COUNT(categoryId) categoryCount,
+  SUM(categoryWeight) categoryWeightTotal,
+  SUM(categoryRateScaled * categoryWeight) courseRateOrigin,
+  SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) courseRateScaled,
+ MAlert,
+ HAlert,
+ CAlert,
+ case
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= CAlert
+ then 'Critical'
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= HAlert
+ then 'High'
+ when SUM(categoryRateScaled * categoryWeight) * (1 / SUM(categoryWeight)) <= MAlert
+ then 'Moderate'
+ else 'None'
+ end as AlertLevel,
+ CurrentGrade
+FROM (
+  SELECT
+    student.StudentID studentId,
+  student.FirstName sFirstName,
+  student.LastName sLastName,
+  student.EnglishName sEnglishName,
+  student.Counselor counselor,
+    course.SubjectID courseId,
+    course.SubjectName courseName,
+    category.CategoryID categoryId,
+    category.CategoryWeight categoryWeight,
+    SUM((grade.ScorePoint / item.MaxValue) * item.ItemWeight) * (1 / SUM(item.ItemWeight)) categoryRateScaled,
+   CASE
+    WHEN course.MAlert = 'B' THEN '0.86'
+    WHEN course.MAlert = 'C+' THEN '0.73'
+    WHEN course.MAlert = 'C' THEN '0.67'
+    WHEN course.MAlert = 'C-' THEN '0.60'
+    WHEN course.MAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS MAlert,
+    CASE
+    WHEN course.HAlert = 'B' THEN '0.86'
+    WHEN course.HAlert = 'C+' THEN '0.73'
+    WHEN course.HAlert = 'C' THEN '0.67'
+    WHEN course.HAlert = 'C-' THEN '0.60'
+    WHEN course.HAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS HAlert,
+   CASE
+    WHEN course.CAlert = 'B' THEN '0.86'
+    WHEN course.CAlert = 'C+' THEN '0.73'
+    WHEN course.CAlert = 'C' THEN '0.67'
+    WHEN course.CAlert = 'C-' THEN '0.60'
+    WHEN course.CAlert = 'F' THEN '0.50'
+    ELSE '-1'
+   END AS CAlert,
+   student.CurrentGrade CurrentGrade
+  FROM tblBHSOGSGrades grade
+    JOIN tblBHSOGSCategoryItems item ON grade.CategoryItemID = item.CategoryItemID
+    JOIN tblBHSOGSCourseCategory category ON item.CategoryID = category.CategoryID
+    JOIN tblBHSSubject course ON category.SubjectID = course.SubjectID
+    JOIN tblBHSStudentSubject studentSubject ON grade.StudSubjID = studentSubject.StudSubjID
+    JOIN tblBHSStudent student ON studentSubject.StudNum = StudentID
+  WHERE grade.SemesterID = (SELECT SemesterID FROM tblBHSSemester WHERE CurrentSemester = 'Y') AND grade.ScorePoint IS NOT NULL AND grade.Exempted <> 1 AND course.GAlert = '1'
+  GROUP BY student.StudentID, course.SubjectID, category.CategoryID, category.CategoryWeight, course.subjectName,
+ course.MAlert,
+    course.HAlert,
+    course.CAlert,student.FirstName, student.LastName, student.EnglishName, student.Counselor, student.CurrentGrade
+) categoryGrade
+GROUP BY studentId, courseId, courseName,sFirstName,sLastName,sEnglishName,counselor,
+MAlert, HAlert, CAlert, CurrentGrade
+ORDER BY counselor asc, studentId desc";
+
+
+$stmt = $conn->prepare($query);
+
+
+
+if ($stmt->execute()) {
+    while ($row = $stmt->fetch()) {
+      if($row['AlertLevel'] !== 'None') {
+        $arr[$row['counselor']][] = $row;
+      }
+
     }
-    return $emails;
 }
 
-function parseRecipientsFromString($list, $defaultName = '') {
-    if (!is_string($list) || $list === '') return array();
-    // split by ; or , and trim
-    $parts = preg_split('/[;,]+/', $list);
-    $uniq  = array(); // dedupe by lowercase email
-    $out   = array();
-
-    foreach ($parts as $p) {
-        $email = trim($p);
-        if ($email === '') continue;
-        // (optional) validate email
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
-        $key = strtolower($email);
-        if (isset($uniq[$key])) continue; // skip duplicates
-        $uniq[$key] = true;
-        $out[] = array('email' => $email, 'name' => $defaultName);
-    }
-    return $out;
-}
-
-
-function fetchCounselors(PDO $pdo, $groupLike) {
-    $stmt = $pdo->prepare("
-        SELECT FirstName, Email3
-        FROM tblStaff
-        WHERE GroupTeam LIKE ? AND currentstaff = 'Y'
-        ORDER BY FirstName, LastName
-    ");
-    $stmt->execute([$groupLike]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-$msps1 = fetchCounselors($pdo, '%1027%');
-$msps2 = fetchCounselors($pdo, '%1028%');
-$msps1Names = array_map('mb_strtolower', array_column($msps1, 'FirstName'));
-$msps2Names = array_map('mb_strtolower', array_column($msps2, 'FirstName'));
-
-
-$MSP1Email     = implode(';', getGroupEmails($pdo, '1019'));
-$MSP2Email     = implode(';', getGroupEmails($pdo, '1020'));
-$MSP3Email     = implode(';', getGroupEmails($pdo, '1021'));
-$MSPbccEmail   = implode(';', getGroupEmails($pdo, '1022'));
-$Email1034     = implode(';', getGroupEmails($pdo, '1034'));
-$Email1053     = implode(';', getGroupEmails($pdo, '1053'));
-// 1. Get counselors
-$counselors = $pdo->query("SELECT FirstName, LastName, Email3 FROM tblStaff WHERE SchoolID = 'BHS' AND PositionTitle LIKE '%Counselor%' AND CurrentStaff = 'Y' ORDER BY FirstName, LastName")->fetchAll(PDO::FETCH_ASSOC);
-foreach ($counselors as $counselor) {
-    $first = $counselor['FirstName'];
-    $last = $counselor['LastName'];
-    $email3 = $counselor['Email3'];
-    $fullname = "$first $last";
-    // echo $fullname;
-    // Visa & MSP expiry
-    $stmt = $pdo->prepare("
-        SELECT s.StudentID, s.LastName, s.FirstName, s.EnglishName, s.Sex, s.Origin, s.Counselor, s.DOB,
-               s.VisaExpiry, s.ReVisaExpiry, s.Visaexpiryna, s.VisaSubmission, s.Revisaexpiryna,
-               s.PassportExpiry, c.CName,
-               i.ExpireDate, i.expectedterm, i.CancelDate, i.PEndDate, i.M6, i.OneSemester,
-               ct.SICOther
-        FROM tblBHSStudent s
-        INNER JOIN tblBHSStudentInfo i ON i.StudentID = s.StudentID
-        INNER JOIN tblCountry c ON s.Origin = c.CID
-        INNER JOIN tblBHSStudentContact ct ON s.StudentID = ct.StudentID
-        WHERE s.CurrentStudent = 'Y'
-          AND s.Citizenship = 'INTERNATIONAL'
-          AND ct.ContactTab = 'STD'
-          AND s.Counselor = ?
-          AND (
-                s.VisaExpiry < DATEADD(MONTH, 5, GETDATE()) OR
-                s.ReVisaExpiry < DATEADD(MONTH, 5, GETDATE()) OR
-                i.ExpireDate < DATEADD(MONTH, 1, GETDATE())
-          )
-        ORDER BY s.Counselor, s.VisaExpiry, i.ExpireDate
-    ");
-    $stmt->execute([$fullname]);
-    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (count($students) > 0) {
-        // Determine MSP group
-        $firstLower = mb_strtolower($first);
-
-        if (in_array($firstLower, $msps1Names, true)) {
-            $extra = $MSP1Email;
-        } elseif (in_array($firstLower, $msps2Names, true)) {
-            $extra = $MSP2Email;
-        } else {
-            $extra = $MSP3Email;
-        }
-       $combined = "$email3;$extra";
-
-       // Convert to array and filter out blanks
-       $emailList = array_filter(array_map('trim', explode(';', $combined)));
-
-       // Convert to array of ['email' => ..., 'name' => ...]
-       $to = [];
-       foreach ($emailList as $address) {
-           $to[] = ['email' => $address, 'name' => ''];
-       }
-        $subject = "Current International Student Visa & MSP Expiration Date Notice";
-        $body = "<p>Dear $first,<br><br>The following current international student's visa or MSP has been or will be expired.<br><br>";
-        $body .= "<table border='1' cellspacing='0' cellpadding='0' style='font-size:10pt;'><tr align='center'><td>Student ID</td><td>Student Name</td><td>Sex</td><td>DOB</td><td>Origin</td><td>Counsellor</td><td>Study Permit Expiry</td><td>Submission Date</td><td>Re-entry Visa Expiry</td><td>Passport Expiry</td><td>MSP Expiry</td><td>Cancel Date</td><td>P.I. Expiry</td><td>Self-arranged</td><td>Expected Term</td><td>1 Sem</td><td>PR Info</td></tr>";
-        foreach ($students as $s) {
-            $body .= "<tr><td>{$s['StudentID']}</td><td>{$s['LastName']}, {$s['FirstName']} {$s['EnglishName']}</td><td>{$s['Sex']}</td><td>".date('Y-m-d', strtotime($s['DOB']))."</td><td>".substr($s['CName'], 0, 20)."</td><td>{$s['Counselor']}</td>";
-            $body .= "<td>" . ($s['Visaexpiryna'] === 'N/A' ? 'N/A' : date('Y-m-d', strtotime($s['VisaExpiry']))) . "</td>";
-            $body .= "<td>" . ($s['VisaSubmission'] ? date('Y-m-d', strtotime($s['VisaSubmission'])) : '') . "</td>";
-            $body .= "<td>" . ($s['Revisaexpiryna'] === 'N/A' ? 'N/A' : date('Y-m-d', strtotime($s['ReVisaExpiry']))) . "</td>";
-            $body .= "<td>" . date('Y-m-d', strtotime($s['PassportExpiry'])) . "</td>";
-            $body .= "<td>" . date('Y-m-d', strtotime($s['ExpireDate'])) . "</td>";
-            $body .= "<td>" . date('Y-m-d', strtotime($s['CancelDate'])) . "</td>";
-            $body .= "<td>" . date('Y-m-d', strtotime($s['PEndDate'])) . "</td>";
-            $body .= "<td>{$s['M6']}</td><td>{$s['expectedterm']}</td><td>{$s['OneSemester']}</td><td>{$s['SICOther']}</td></tr>";
-        }
-        $body .= "</table><br>This message is automatically generated by Bodwell database system.";
-        $cc = parseRecipientsFromString($MSPbccEmail, ''); // or 'MSP BCC'
-        echo $combined;
-        print_r($to);
-        echo "<br />";
-        echo "----------------------------------------------------------------";
-        echo "<br />";
-        print_r($cc);
-        echo "<br />";
-        echo "/////////////////////////////////////////////////////////////////////";
-        echo "<br />";
-
-        // print_r($cc);
-        // $sendEmail = sendEmail(
-        //     ['email' => 'no-reply@bodwell.edu', 'name' => 'Bodwell System'],
-        //     [['email' => 'chanho.lee@bodwell.edu', 'name' => '']],
-        //     [],
-        //     $subject,
-        //     $body
-        // );
-        // echo $sendEmail;
-    }
-
-    // Unverified Parent Emails - Counselor
-    $stmt2 = $pdo->prepare("
-        SELECT s.StudentID, s.LastName, s.FirstName, s.EnglishName, s.Sex, s.Origin, s.Counselor, s.DOB,
-               ct.EmailPersonal AS Email, c.CName, 'Parent/Guardian 1' AS Contact
-        FROM tblBHSStudent s
-        JOIN tblBHSStudentContact ct ON s.StudentID = ct.StudentID
-        JOIN tblCountry c ON s.Origin = c.CID
-        WHERE s.CurrentStudent = 'Y'
-          AND ct.EVInternal = 0
-          AND ct.EmailPersonal <> ''
-          AND ct.ContactTab = 'PG1'
-          AND s.Counselor = ?
-    ");
-    $stmt2->execute([$fullname]);
-    $rows2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-
-    if (count($rows2) > 0) {
-        $body = "<p>Hi, $first,<br><br>The following current student's Parent/Guardian 1 email address has NOT been verified.<br><br>";
-        $body .= "<table border='1' cellspacing='0' cellpadding='0' style='font-size:10pt;'><tr><td>Student ID</td><td>Name</td><td>Sex</td><td>DOB</td><td>Origin</td><td>Counselor</td><td>Contact</td><td>Email</td></tr>";
-        foreach ($rows2 as $r) {
-            $body .= "<tr><td>{$r['StudentID']}</td><td>{$r['LastName']}, {$r['FirstName']} {$r['EnglishName']}</td><td>{$r['Sex']}</td><td>".date('Y-m-d', strtotime($r['DOB']))."</td><td>".substr($r['CName'], 20)."</td><td>{$r['Counselor']}</td><td>{$r['Contact']}</td><td>{$r['Email']}</td></tr>";
-        }
-        $body .= "</table><br>This message is automatically generated by Bodwell database system.";
+createtree($arr);
 
 
 
-        // $sendEmail2 = sendEmail(
-        //     ['email' => 'no-reply@bodwell.edu', 'name' => 'Bodwell System'],
-        //     [['email' => 'chanho.lee@bodwell.edu', 'name' => $first . ' ' . $last]],
-        //     [],
-        //     "Email address NOT verified Notice",
-        //     $body
-        // );
-        // echo $sendEmail2;
-    }
 
-
-
-}
-
-// Remaining 3 global email sections coming in next message (character limit)...
+ ?>

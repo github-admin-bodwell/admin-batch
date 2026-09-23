@@ -268,11 +268,16 @@ WHERE d.RDate = ?
   AND c.SchoolID IN ('BHS','BSS')
   AND c.Email3 <> ''
   AND c.CurrentStaff = 'Y'
-ORDER BY
-    s.Counselor,
-    h.HAdvisor,
-    s.LastName,
-    s.FirstName
+  ORDER BY
+      d.RStudy,
+      s.LastName,
+      s.FirstName,
+      s.EnglishName,
+      h.HAdvisor,
+      s.Counselor,
+      h.Tutor,
+      d.Rcomment,
+      h.SundayGroup
 ";
 
 $stmt = $pdo->prepare($sql);

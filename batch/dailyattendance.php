@@ -30,13 +30,25 @@ if (!(($weekday >= 2 && $weekday <= 5 && !$isMonday) || ($weekday === 1 && $isMo
 
 // Determine block and day index based on rptstudentschedule96.cfm
 $scheduleWeekday = $isMonday ? 1 : $weekday; // 1=Mon ... 5=Fri
+// $blockMap = [
+//     1 => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Mon: A,B,C,D,E
+//     2 => [1 => 3, 2 => 1, 3 => 2, 4 => 4, 5 => 5], // Tue: C,A,B,D,E
+//     3 => [1 => 2, 2 => 3, 3 => 1, 4 => 4, 5 => 5], // Wed: B,C,A,D,E
+//     4 => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Thu: A,B,C,D,E
+//     5 => [1 => 3, 2 => 1, 3 => 2, 4 => 4, 5 => 5], // Fri: C,A,B,D,E
+// ];
+
+
+
 $blockMap = [
     1 => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Mon: A,B,C,D,E
-    2 => [1 => 3, 2 => 1, 3 => 2, 4 => 4, 5 => 5], // Tue: C,A,B,D,E
-    3 => [1 => 2, 2 => 3, 3 => 1, 4 => 4, 5 => 5], // Wed: B,C,A,D,E
-    4 => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Thu: A,B,C,D,E
-    5 => [1 => 3, 2 => 1, 3 => 2, 4 => 4, 5 => 5], // Fri: C,A,B,D,E
+    2 => [1 => 4, 2 => 1, 3 => 2, 4 => 3, 5 => 5], // Tue: D,A,B,C,E
+    3 => [1 => 3, 2 => 4, 3 => 1, 4 => 2, 5 => 5], // Wed: C,D,A,B,E
+    4 => [1 => 2, 2 => 3, 3 => 4, 4 => 1, 5 => 5], // Thu: B,C,D,A,E
+    5 => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], // Fri: A,B,C,D,E
 ];
+
+
 $dayIndexMap = [
     1 => 5, // Mon is Day 5
     2 => 2, // Tue is Day 2
@@ -44,6 +56,8 @@ $dayIndexMap = [
     4 => 4, // Thu is Day 4
     5 => 1, // Fri is Day 1
 ];
+
+
 if (!isset($blockMap[$scheduleWeekday][$period])) exit;
 if (!isset($dayIndexMap[$scheduleWeekday])) exit;
 $block = $blockMap[$scheduleWeekday][$period];

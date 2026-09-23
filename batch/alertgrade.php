@@ -72,7 +72,8 @@ function createtree($arr) {
       }
 
     }
-    $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />'.createsubtreetable('AEP & G8/9',$tbl);
+    $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />'.createsubtreetable('Grade 8/9',$tbl);
+    // $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />';
 
     $email  = getCounselorEmail($x);
     $from =  array('email' => 'helpdesk@bodwell.edu', 'name' => 'IT Helpdesk');

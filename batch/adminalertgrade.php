@@ -73,7 +73,8 @@ function createtree($arr) {
       }
 
     }
-    $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />'.createsubtreetable('AEP & G8/9',$tbl);
+    $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />'.createsubtreetable('Grade 8/9',$tbl);
+    // $maintbl = createsubtreetable('Grade 12' ,$G12tbl).'<br /><br />'.createsubtreetable('Grade 11',$G11tbl).'<br /><br />'.createsubtreetable('Grade 10',$G10tbl).'<br /><br />';
     $from =  array('email' => 'helpdesk@bodwell.edu', 'name' => 'IT Helpdesk');
     $to = array(
       array('email' => $email, 'name' => $x)
@@ -92,7 +93,7 @@ function createtree($arr) {
     array('email' => 'shane.chaffey@bodwell.edu', 'name' => 'Shane Chaffey'),
     array('email' => 'hallis@bodwell.edu', 'name' => 'Housam Hallis'),
     array('email' => 'j_canderan@bodwell.edu', 'name' => 'Jeri Canderan'),
-    array('email' => 'marie.alemi@bodwell.edu', 'name' => 'Marie Alemi'),
+    array('email' => 'm_kim@bodwell.edu', 'name' => 'Mirye Kim'),
     array('email' => 'angela.jay@bodwell.edu', 'name' => 'Angela Jay')
   );
 $send = sendEmail($from, $to, $cc, $subject, $mtbl, $altBody = '');
