@@ -39,9 +39,9 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 4) { // Monday = 1, Thursday = 4
         }
 
         $html = "Hi, {$row['LastName']}, {$row['FirstName']},<br><br>" .
-                "You are receiving this message because you were marked Unexcused from Study Hall this evening. " .
-                "Please be aware that 3 absences will result in a weekend leave ban. If you have any questions or believe this is a mistake, " .
-                "please speak with your hall advisor, or Mr. Ben Fowler.<br><br>Thank you!";
+                "You are receiving this message because you were marked Unexcused from Study Hall this evening. Please be aware that each absence will result in a Double Study Hall," .
+                "and your third absence will result in being required to attend Study Hall 4 nights/week. Each absence beyond your third will result in a leave ban. If you have any " .
+                "questions or believe this is a mistake, please speak with your hall advisor, or Mr. Ben Fowler.";
 
         sendEmail(
             ['email' => 'ben.fowler@bodwell.edu', 'name' => 'Ben Fowler'],
