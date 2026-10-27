@@ -1,8 +1,7 @@
 <?php
+require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$conn = new PDO($dsn);
+$conn = getDatabaseConnection();
 
 $holidayFile = "E:/admin.bodwell.edu/bhs/schedule/holiday.txt";
 
@@ -118,16 +117,16 @@ if (count($allRows) == 0) {
 
 // Sort like CF query: name, sdate, block, subjectname
 usort($allRows, function($a, $b) {
-    $x = strcmp($a['name'], $b['name']);
+    $x = strcmp((string)($a['name'] ?? ''), (string)($b['name'] ?? ''));
     if ($x != 0) return $x;
 
-    $x = strcmp($a['Sdate'], $b['Sdate']);
+    $x = strcmp((string)($a['Sdate'] ?? ''), (string)($b['Sdate'] ?? ''));
     if ($x != 0) return $x;
 
-    $x = strcmp($a['Block'], $b['Block']);
+    $x = strcmp((string)($a['Block'] ?? ''), (string)($b['Block'] ?? ''));
     if ($x != 0) return $x;
 
-    return strcmp($a['SubjectName'], $b['SubjectName']);
+    return strcmp((string)($a['SubjectName'] ?? ''), (string)($b['SubjectName'] ?? ''));
 });
 
 // Group by teacher name/email

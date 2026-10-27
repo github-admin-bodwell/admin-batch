@@ -1,8 +1,8 @@
 <?php
+require_once __DIR__ . '/../lib/db.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+$pdo = getDatabaseConnection();
 
 $dateToday = date('Y-m-d');
 $filePath = 'E:/Batch/students.csv';
@@ -10,6 +10,7 @@ $filePath = 'E:/Batch/students.csv';
 // Get current semester
 $stmt = $pdo->query("SELECT * FROM tblbhssemester WHERE currentsemester = 'Y'");
 $semester = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$semester) throw new RuntimeException('No current semester; CSV was not overwritten.');
 
 // Get current students
 $query = "SELECT s.studentid,
@@ -45,7 +46,7 @@ foreach ($students as $student) {
     $endDate = date('Y-m-d', strtotime($semester['NextStartDate'] . ' -1 day'));
     $ttlStmt = $pdo->query("SELECT SUM(hours) AS ttlhours FROM tblbhsspstudentactivities WHERE studentid = '$studentID' AND semesterid = '$semID' AND activitystatus = '80' AND sdate >= '$startDate' AND sdate <= '$endDate'");
     $ttl = $ttlStmt->fetch(PDO::FETCH_ASSOC);
-    $ttlHours = $ttl['ttlhours'] ? number_format($ttl['ttlhours'], 1) : '0.0';
+    $ttlHours = !empty($ttl['ttlhours']) ? number_format($ttl['ttlhours'], 1) : '0.0';
 
     // Tidiness
     $tidyStmt = $pdo->query("SELECT tidy1 FROM tblbhsdormdailylog WHERE studentid = '$studentID' AND rdate = '$dateToday'");

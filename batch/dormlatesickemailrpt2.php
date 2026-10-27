@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+require_once __DIR__ . '/../lib/db.php';
+$pdo = getDatabaseConnection();
 
 $thedate = date('Y-m-d');
 $yesterday = date('Y-m-d', strtotime('-1 day'));

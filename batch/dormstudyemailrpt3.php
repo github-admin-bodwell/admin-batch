@@ -2,11 +2,9 @@
 
 
 require_once __DIR__.'/sendEmailClass.php';
+require_once __DIR__ . '/../lib/db.php';
 
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-// $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
-
-$pdo = new PDO($dsn);
+$pdo = getDatabaseConnection();
 
 $thedate = date('Y-m-d');
 
@@ -43,13 +41,17 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 4) { // Monday = 1, Thursday = 4
                 "and your third absence will result in being required to attend Study Hall 4 nights/week. Each absence beyond your third will result in a leave ban. If you have any " .
                 "questions or believe this is a mistake, please speak with your hall advisor, or Mr. Ben Fowler.";
 
-        sendEmail(
+        $sendResult = sendEmail(
             ['email' => 'ben.fowler@bodwell.edu', 'name' => 'Ben Fowler'],
             $to,
             $cc,
             'Unexcused from Study Hall this evening',
             $html
         );
+
+        if ($sendResult !== true) {
+            throw new RuntimeException('Study hall reminder delivery failed; no sent log written.');
+        }
 
         // Log the sent email
         $insert = $pdo->prepare("INSERT INTO tblSendEmail (SendTo, SendFrom, Sendcc, SendSubject, SendAttach, SendMessage, SendDate, SchoolID, Sendbcc, SentDate)

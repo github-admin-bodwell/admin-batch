@@ -1,8 +1,7 @@
 <?php
+require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+$pdo = getDatabaseConnection();
 
 $weekday = date('N'); // 1 (Mon) to 5 (Fri)
 if ($weekday >= 1 && $weekday <= 5) {
@@ -46,7 +45,7 @@ if ($weekday >= 1 && $weekday <= 5) {
                           ->fetchAll(PDO::FETCH_COLUMN);
 
         $recipients = array_map(function($email) {
-            return ['email' => $email];
+            return ['email' => $email, 'name' => ''];
         }, $email1054);
 
         sendEmail(

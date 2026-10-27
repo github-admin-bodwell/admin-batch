@@ -1,16 +1,14 @@
 <?php
 require_once __DIR__.'/sendEmailClass.php';
+require_once __DIR__ . '/../lib/db.php';
 
 function getCounselorEmail($name) {
-  $dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-
-  // $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
-  $conn = new PDO($dsn);
+  $conn = getDatabaseConnection();
   $query = "SELECT *
   FROM tblStaff
-  WHERE CONCAT(FirstName, ' ', LastName) = '$name'";
+  WHERE CONCAT(FirstName, ' ', LastName) = ?";
   $stmt = $conn->prepare($query);
-  if ($stmt->execute()) {
+  if ($stmt->execute([$name])) {
       $row = $stmt->fetch();
       if($row) {
         return $row['Email3'];
@@ -99,10 +97,7 @@ function createtree($arr) {
 
 
 }
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-
-// $dsn = "odbc:Driver={SQL Server};Server=10.100.0.5;Database=Bodwell;Uid=devweb;Pwd=9zQjq4WRgkFF;";
-$conn = new PDO($dsn);
+$conn = getDatabaseConnection();
 
 // $query = "SELECT
 //   studentId,
@@ -263,8 +258,7 @@ ORDER BY counselor asc, studentId desc";
 
 
 $stmt = $conn->prepare($query);
-
-
+$arr = [];
 
 if ($stmt->execute()) {
     while ($row = $stmt->fetch()) {
@@ -275,7 +269,9 @@ if ($stmt->execute()) {
     }
 }
 
-createtree($arr);
+if ($arr) {
+    createtree($arr);
+}
 
 
 

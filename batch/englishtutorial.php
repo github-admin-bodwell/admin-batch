@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+require_once __DIR__ . '/../lib/db.php';
+$pdo = getDatabaseConnection();
 
 $today = date('Y-m-d');
 $dayOfWeek = date('w'); // Sunday = 0, Monday = 1, ..., Saturday = 6
@@ -10,7 +9,11 @@ $dayOfWeek = date('w'); // Sunday = 0, Monday = 1, ..., Saturday = 6
 // Skip weekends
 if ($dayOfWeek >= 1 && $dayOfWeek <= 4) {
     // Check if today is a holiday
-    $holidayDate = trim(file_get_contents('e:/admin.bodwell.edu/bhs/schedule/holiday.txt'));
+    $holidayFile = 'e:/admin.bodwell.edu/bhs/schedule/holiday.txt';
+    if (!is_file($holidayFile)) $holidayFile = __DIR__ . '/holiday.txt';
+    $holidayContents = @file_get_contents($holidayFile);
+    if ($holidayContents === false) throw new RuntimeException('Holiday file is missing or unreadable.');
+    $holidayDate = trim($holidayContents);
     if ($holidayDate !== $today) {
 
         // Get current semester
@@ -38,7 +41,7 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 4) {
                 $stmtCheck = $pdo->prepare($checkSql);
                 $stmtCheck->execute([$row['SubjectID'], $today]);
 
-                if ($stmtCheck->rowCount() == 0) {
+                if ($stmtCheck->fetchColumn() === false) {
                     $subject = $row['SubjectName'];
                     $firstname = $row['FirstName'];
 

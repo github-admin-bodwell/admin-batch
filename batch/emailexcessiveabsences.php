@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+require_once __DIR__ . '/../lib/db.php';
+$pdo = getDatabaseConnection();
 
 // Fetch data
 $sql = "
@@ -40,16 +39,20 @@ if (count($rows) > 0) {
                      ->fetchAll(PDO::FETCH_COLUMN);
 
     $recipients = array_map(function($email) {
-        return ['email' => $email];
+        return ['email' => $email, 'name' => ''];
     }, $email1048);
 
-    sendEmail(
+    $sendResult = sendEmail(
         ['email' => 'no-reply@bodwell.edu', 'name' => 'Attendance Report'],
         $recipients,
         [],
         'Excessive Absences 30+ (automated email)',
         $table
     );
+
+    if ($sendResult !== true) {
+        throw new RuntimeException('Excessive absence report delivery failed; no sent log written.');
+    }
 
     // Log to tblsendemail
     $stmt = $pdo->prepare("INSERT INTO tblsendemail (sendto, sendfrom, sendsubject, sendattach, sendmessage, senddate, sentdate, schoolid, sendbcc) VALUES (?, ?, ?, ?, ?, GETDATE(), GETDATE(), ?, ?)");

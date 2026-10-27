@@ -1,8 +1,7 @@
 <?php
+require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__.'/sendEmailClass.php';
-
-$dsn = "odbc:Driver={SQL Server};Server=10.100.4.6;Database=Bodwell;Uid=web;Pwd=AJgw!cG4nw;";
-$pdo = new PDO($dsn);
+$pdo = getDatabaseConnection();
 
 $dateToday = date('Y-m-d');
 $weekday = date('N'); // 1 (Mon) to 7 (Sun)

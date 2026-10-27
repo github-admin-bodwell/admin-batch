@@ -1,20 +1,23 @@
 <?php
-// echo dirname(__FILE__);
-require_once '../settings.php';
-require_once '../lib/PHPMailer-5.2.22/PHPMailerAutoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+require_once __DIR__ . '/../settings.php';
+require_once __DIR__ . '/../lib/smtp-config.php';
+require_once __DIR__ . '/../lib/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../lib/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../lib/PHPMailer/src/SMTP.php';
 
-function sendEmail($from, $to, $cc, $subject, $body, $altBody = '') {
-    global $settings;
+function sendEmail($from, $to, $cc, $subject, $body, $altBody = '', $bcc = []) {
+    $smtp = loadBatchSmtpConfig();
     $mail = new PHPMailer();
     $mail->isSMTP();
     $mail->CharSet = "UTF-8";
-    $mail->SMTPDebug = $settings['smtp']['debug'];
-    $mail->Host = $settings['smtp']['host'];
-    $mail->Port = $settings['smtp']['port'];
-    $mail->SMTPSecure = $settings['smtp']['secure'];
-    $mail->SMTPAuth = $settings['smtp']['auth'];
-    $mail->Username = $settings['smtp']['username'];
-    $mail->Password = $settings['smtp']['password'];
+    $mail->SMTPDebug = $smtp['debug'];
+    $mail->Host = $smtp['host'];
+    $mail->Port = $smtp['port'];
+    $mail->SMTPSecure = $smtp['secure'];
+    $mail->SMTPAuth = $smtp['auth'];
+    $mail->Username = $smtp['username'];
+    $mail->Password = $smtp['password'];
 
 
     $mail->AddEmbeddedImage('img/youtube.jpg', 'youtube');
@@ -45,6 +48,10 @@ function sendEmail($from, $to, $cc, $subject, $body, $altBody = '') {
         }
     }
     
+    foreach ($bcc as $row) {
+        $mail->addBCC($row['email'], $row['name'] ?? '');
+    }
+
     $mail->Subject = $subject;
     $mail->msgHTML($body);
     $mail->AltBody = $altBody;
